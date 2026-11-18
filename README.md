@@ -112,6 +112,14 @@ gh release download -R VirtuallyScott/HP_Scanner_App -p '*.whl'   # latest relea
 python3 -m pip install --user hp_scanner-*.whl
 ```
 
+If `hpscan` isn't found afterwards, add pip's user scripts folder to PATH (zsh shown; use
+`~/.bash_profile` for bash on macOS, `~/.bashrc` on Linux, `fish_add_path (python3 -m site --user-base)/bin` for fish):
+
+```bash
+echo "export PATH=\"$(python3 -m site --user-base)/bin:\$PATH\"" >> ~/.zshrc
+source ~/.zshrc
+```
+
 Runtime dependencies are declared in `requirements.txt` and baked into the wheel's metadata at
 build time, so `pip install <wheel>` installs them; no separate `pip install -r` is needed.
 

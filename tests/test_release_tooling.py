@@ -340,6 +340,14 @@ def test_release_notes_pin_this_version():
     assert notes.startswith("## Install")
 
 
+@pytest.mark.parametrize("rc", ["~/.zshrc", "~/.bash_profile", "~/.bashrc"])
+def test_release_notes_show_echo_path_command(rc):
+    notes = release_notes.build_notes("0.0.1", REPO)
+    line = f'echo "export PATH=\\"$(python3 -m site --user-base)/bin:\\$PATH\\"" >> {rc}'
+    assert line in notes
+    assert "fish_add_path (python3 -m site --user-base)/bin" in notes
+
+
 def test_release_notes_wheel_name_matches_build_output():
     # Must match what `python -m build` produces, or the download URL 404s.
     version = (ROOT / "VERSION").read_text().strip()

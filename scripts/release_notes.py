@@ -68,8 +68,29 @@ hpscan config --host <scanner-ip-or-name.local>
 hpscan            # prompts for type / quality / prefix, then scans
 ```
 
-If `hpscan` isn't found, the user scripts folder isn't on your PATH: on macOS that's
-`~/Library/Python/3.X/bin`, on Linux `~/.local/bin`.
+### Add `hpscan` to your PATH
+
+If `hpscan` isn't found, pip's user scripts folder isn't on your PATH (macOS:
+`~/Library/Python/3.X/bin`, Linux: `~/.local/bin`). Append it to your shell's startup file
+with the line for your shell; `python3 -m site --user-base` fills in the right folder:
+
+```bash
+# zsh (macOS default)
+echo "export PATH=\\"$(python3 -m site --user-base)/bin:\\$PATH\\"" >> ~/.zshrc
+source ~/.zshrc
+
+# bash on macOS
+echo "export PATH=\\"$(python3 -m site --user-base)/bin:\\$PATH\\"" >> ~/.bash_profile
+source ~/.bash_profile
+
+# bash on Linux
+echo "export PATH=\\"$(python3 -m site --user-base)/bin:\\$PATH\\"" >> ~/.bashrc
+source ~/.bashrc
+```
+
+fish: `fish_add_path (python3 -m site --user-base)/bin`
+
+Check it with `command -v hpscan`. Use the same `python3` you installed with.
 
 Upgrade by running the install command for a newer release; uninstall with
 `python3 -m pip uninstall hp-scanner`.
