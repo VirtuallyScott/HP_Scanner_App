@@ -325,3 +325,39 @@ def test_main_refuses_old_python(monkeypatch, capsys):
     monkeypatch.setattr(install_wheel, "check_python", lambda: "too old")
     assert install_wheel.main(["--uninstall"]) == 1
     assert "too old" in capsys.readouterr().err
+
+
+release_notes = _load("release_notes")
+REPO = "VirtuallyScott/HP_Scanner_App"
+
+
+def test_release_notes_pin_this_version():
+    notes = release_notes.build_notes("0.0.1", REPO)
+    url = f"https://github.com/{REPO}/releases/download/v0.0.1/hp_scanner-0.0.1-py3-none-any.whl"
+    assert f"python3 -m pip install --user {url}" in notes
+    assert f"--break-system-packages {url}" in notes
+    assert f"gh release download v0.0.1 -R {REPO} -p '*.whl'" in notes
+    assert notes.startswith("## Install")
+
+
+def test_release_notes_wheel_name_matches_build_output():
+    # Must match what `python -m build` produces, or the download URL 404s.
+    version = (ROOT / "VERSION").read_text().strip()
+    assert release_notes.wheel_name(version) == f"hp_scanner-{version}-py3-none-any.whl"
+
+
+def test_release_notes_append_changelog(tmp_path, capsys):
+    log = tmp_path / "changelog.md"
+    log.write_text("## What's Changed\n* feat: hpscan\n")
+    assert release_notes.main(["0.0.2", "--repo", REPO, "--changelog", str(log)]) == 0
+    out = capsys.readouterr().out
+    assert out.index("## Install") < out.index("## What's Changed")
+    assert "/v0.0.2/hp_scanner-0.0.2-py3-none-any.whl" in out
+
+
+@pytest.mark.parametrize(
+    ("version", "repo"), [("v0.0.1", REPO), ("0.1", REPO), ("0.0.1", "noslash"), ("0.0.1", "a/b c")]
+)
+def test_release_notes_reject_bad_input(version, repo, capsys):
+    assert release_notes.main([version, "--repo", repo]) == 1
+    assert "error:" in capsys.readouterr().err

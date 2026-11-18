@@ -84,8 +84,31 @@ jobs:
           git tag -a "v$VERSION" -m "v$VERSION"
           git push origin HEAD:main "v$VERSION"
 
+      - name: Write release notes (install instructions + changelog)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="v$VERSION" --jq .body > "$RUNNER_TEMP/changelog.md"
+          python scripts/release_notes.py "$VERSION" --repo "$GITHUB_REPOSITORY" \
+            --changelog "$RUNNER_TEMP/changelog.md" > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
-        run: gh release create "v$VERSION" dist/* --title "v$VERSION" --generate-notes
+        run: |
+          gh release create "v$VERSION" dist/* --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md"
+
+      - name: Install the published wheel from its download URL
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          url="https://github.com/$GITHUB_REPOSITORY/releases/download/v$VERSION/hp_scanner-$VERSION-py3-none-any.whl"
+          python -m venv /tmp/published
+          /tmp/published/bin/pip install "$url"
+          /tmp/published/bin/pip check
+          test "$(/tmp/published/bin/hpscan --version)" = "hpscan $VERSION"

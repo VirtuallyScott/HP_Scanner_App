@@ -94,14 +94,22 @@ Homebrew's Python is marked *externally managed* (PEP 668), which makes plain `p
 refuse. `make install` then adds `--break-system-packages`. Together with `--user` that only writes
 to your user site and never touches Homebrew's own packages.
 
-From a GitHub Release (download the `.whl` attached to the
-[latest release](https://github.com/VirtuallyScott/HP_Scanner_App/releases/latest)):
+**From a GitHub Release** (no checkout needed). Every release on the
+[Releases page](https://github.com/VirtuallyScott/HP_Scanner_App/releases) has the wheel attached and
+copy-paste install commands for that version at the top of its notes. Install straight from the URL:
 
 ```bash
-python3 -m pip install --user hp_scanner-0.0.1-py3-none-any.whl
-# Homebrew/externally-managed Python: add --break-system-packages
-python3 scripts/install_wheel.py hp_scanner-0.0.1-py3-none-any.whl   # same logic as make install
+python3 -m pip install --user \
+  https://github.com/VirtuallyScott/HP_Scanner_App/releases/download/v0.0.1/hp_scanner-0.0.1-py3-none-any.whl
+# Homebrew Python: add --break-system-packages
 hpscan --version
+```
+
+Or fetch the latest release with the GitHub CLI:
+
+```bash
+gh release download -R VirtuallyScott/HP_Scanner_App -p '*.whl'   # latest release
+python3 -m pip install --user hp_scanner-*.whl
 ```
 
 Runtime dependencies are declared in `requirements.txt` and baked into the wheel's metadata at
@@ -403,8 +411,11 @@ Override the scanner for live targets: `make test-live SCANNER_HOST=192.168.1.50
 - **Release** (`.github/workflows/release.yml`): Actions → *Release* → *Run workflow* on `main`, choose
   `patch` / `minor` / `major`, or `none` to release the current `VERSION` as-is (use `none` for the
   first `0.0.1`). It tests, bumps `VERSION`, builds and verifies, commits `chore: release vX.Y.Z`, tags
-  `vX.Y.Z`, pushes both to `main` and creates a GitHub Release with the wheel and sdist attached. It refuses
-  to reuse an existing tag. If `main` is branch-protected, allow `github-actions[bot]` to push.
+  `vX.Y.Z`, pushes both to `main` and creates a GitHub Release with the wheel and sdist attached. The release
+  notes start with install commands pinned to that version (`scripts/release_notes.py`), followed by
+  GitHub's generated changelog. Finally it installs the published wheel **from its download URL** into a
+  clean venv as a check. It refuses to reuse an existing tag. If `main` is branch-protected, allow
+  `github-actions[bot]` to push. From a terminal: `gh workflow run release.yml --ref main -f bump=patch`.
 
 ### How it works
 

@@ -35,6 +35,7 @@ VERSION                 SemVer MAJOR.MINOR.PATCH, single source of the version (
 requirements.txt        runtime deps (Pillow, requests) -> wheel Requires-Dist
 requirements-dev.txt    dev deps -> [dev] extra (build, pytest, pytest-cov, responses, ruff, twine)
 scripts/                bump_version.py (major/minor/patch/none), verify_wheel.py (wheel vs VERSION/requirements),
+                        release_notes.py (release body: pinned install commands + generated changelog),
                         install_wheel.py (make install: pip --user by default, or --venv / active venv),
                         shell_path.py (UPDATE_PATH=1: marked PATH block in ~/.zshrc / bash / fish rc)
 .github/workflows/      ci.yml (lint/test matrix 3.10-3.14, build, verify, clean-venv install, artifact)
@@ -61,7 +62,7 @@ tests/
   fixtures/*.xml        REAL responses captured from the 6700 (eSCL caps/status, LEDM caps/status/job states)
   test_models.py  test_escl.py  test_ledm.py  test_output.py  test_cli.py  test_config.py  test_naming.py
   test_presets.py  test_prompt.py  test_release_tooling.py  test_shell_path.py  test_jpeg.py
-                        (268 tests, ~98% coverage via `make coverage`; HTTP mocked via `responses`, HOME redirected to tmp_path)
+                        (275 tests, ~98% coverage via `make coverage`; HTTP mocked via `responses`, HOME redirected to tmp_path)
 ```
 
 Design rule: **one vocabulary.** `ScanSettings` uses eSCL names everywhere (`RGB24`, `Grayscale8`,
@@ -73,7 +74,7 @@ Design rule: **one vocabulary.** `ScanSettings` uses eSCL names everywhere (`RGB
 | Check | Result |
 |---|---|
 | `make lint` (ruff) | clean |
-| `make test` | 268 passed |
+| `make test` | 275 passed |
 | `make coverage` | 98% (gate 80%) |
 | `make check` (VERSION 0.0.1) | wheel `hp_scanner-0.0.1`, Requires-Dist pillow/requests, verify_wheel OK |
 | Wheel in clean venv | pulls Pillow + requests, `pip check` clean, `hpscan 0.0.1` ✔ |

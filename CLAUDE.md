@@ -31,7 +31,7 @@ make dev                 # .venv + editable install with [dev] extras (stamp fil
 source .venv/bin/activate
 make lint                # ruff check src tests scripts
 make format              # ruff format + ruff check --fix
-make test                # pytest, fully mocked with `responses` (268 tests, ~2.7 s, no scanner needed)
+make test                # pytest, fully mocked with `responses` (275 tests, ~2.7 s, no scanner needed)
 make coverage            # pytest-cov report, fails under 80% (currently ~98%)
 make all                 # lint + test + build + twine check + verify_wheel (the full pre-commit gate)
 make version             # print VERSION
@@ -187,7 +187,10 @@ bare `hpscan` ──► prompt.prompt_choices() / quick flags ──► QuickCho
 - `release.yml`: manual `workflow_dispatch` on `main` only, with input `bump` ∈ patch/minor/major/none (`none` releases
   `VERSION` unchanged, used for the first `0.0.1`). It runs tests, then `scripts/bump_version.py`, build + verify, commits
   `VERSION` as `github-actions[bot]`, tags `vX.Y.Z`, pushes, and runs `gh release create` with `dist/*`. It fails if the tag exists.
-  `GITHUB_TOKEN` pushes don't retrigger CI, so there's no loop.
+  `GITHUB_TOKEN` pushes don't retrigger CI, so there's no loop. Release notes come from `scripts/release_notes.py`
+  (version-pinned install commands, then the body from `gh api .../releases/generate-notes`). The last step
+  pip-installs the wheel from its public download URL, so the URL in the notes is proven to work. Wheel name
+  `hp_scanner-<ver>-py3-none-any.whl` is asserted in tests; if packaging changes it, fix `wheel_name`.
 - Actions are pinned to major tags (`checkout@v7`, `setup-python@v7`, `upload-artifact@v7`). Inputs reach shell
   steps only via `env:`, never by inlining `${{ inputs.* }}` into `run:` (script injection).
 - `scripts/` (stdlib only, linted with ruff) is tested by `tests/test_release_tooling.py`, which loads the scripts by path.
