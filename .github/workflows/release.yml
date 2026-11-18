@@ -1,0 +1,91 @@
+name: Release
+
+# Manually triggered from the Actions tab on main: bumps VERSION, tests, builds,
+# commits + tags vX.Y.Z and publishes a GitHub Release with the wheel and sdist attached.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version part to bump (none = release VERSION as-is, e.g. the first 0.0.1)"
+        type: choice
+        options: [patch, minor, major, none]
+        default: patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install package with dev dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Lint and test
+        run: |
+          ruff check src tests scripts
+          pytest --cov=hp_scanner --cov-fail-under=80
+
+      - name: Bump version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: echo "version=$(python scripts/bump_version.py "$BUMP")" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse to reuse an existing tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::Tag v$VERSION already exists; choose a different bump"
+            exit 1
+          fi
+
+      - name: Build and check
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python -m build
+          twine check dist/*
+          python scripts/verify_wheel.py dist/*.whl
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/*.whl
+          /tmp/smoke/bin/pip check
+          test "$(/tmp/smoke/bin/hpscan --version)" = "hpscan $VERSION"
+
+      - name: Commit VERSION and tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- VERSION; then
+            git commit -m "chore: release v$VERSION" -- VERSION
+          fi
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin HEAD:main "v$VERSION"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "v$VERSION" dist/* --title "v$VERSION" --generate-notes

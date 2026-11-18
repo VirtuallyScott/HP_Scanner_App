@@ -1,0 +1,85 @@
+# Build and packaging
+*.egg
+*.egg-info/
+*.manifest
+*.spec
+*.whl
+.eggs/
+MANIFEST
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+share/python-wheels/
+var/
+wheels/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Coverage and test reports
+*.cover
+.cache
+.coverage
+.coverage.*
+.hypothesis/
+.nox/
+.pytest_cache/
+.tox/
+coverage.xml
+htmlcov/
+junit*.xml
+nosetests.xml
+
+# Editors and IDEs
+*.swo
+*.swp
+*~
+.idea/
+.vscode/
+
+# Environment and secrets
+.env
+.env.*
+.envrc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# Python bytecode and extensions
+*$py.class
+*.py[cod]
+*.so
+__pycache__/
+
+# Scan output (negation must stay last so fixtures remain tracked)
+*.jpeg
+*.jpg
+*.pdf
+*.png
+!tests/fixtures/**
+
+# Tooling caches
+.dmypy.json
+.mypy_cache/
+.pyre/
+.pytype/
+.ruff_cache/
+dmypy.json
+
+# Virtual environments
+.venv/
+ENV/
+env/
+venv/
